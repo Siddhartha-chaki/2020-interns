@@ -4,26 +4,25 @@
  * and open the template in the editor.
  */
 package viusalizer;
-import java.io.FileReader; 
+import java.awt.BorderLayout;
+import java.awt.Dialog;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator; 
-import java.util.Map; 
-import java.util.Set;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject; 
 import org.json.simple.parser.*;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-
-import javax.swing.JComboBox;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.util.HashMap;
+import java.util.NavigableMap;
+import java.util.SortedMap;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 /**
  *
  * @author Phoenix
@@ -33,36 +32,28 @@ public class Viusalizer {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws IOException, ParseException{
+    Graph mainPanel;
+    public static void main(String[] args) throws IOException, ParseException, java.text.ParseException{
         Viusalizer vz=new Viusalizer();
-        // parsing file "JSONExample.json" 
+        FileOperations fop=new FileOperations();
+        JSONObject jo=fop.getJSONObjFromFile("./data/data.json");
         
-        Object obj = new JSONParser().parse(new FileReader("./data/data.json")); 
-          
-        // typecasting obj to JSONObject 
-        JSONObject jo = (JSONObject) obj; 
-        JSONObject jo1 = (JSONObject) jo.get("rates");
-        Map data = ((Map)(jo.get("rates")));
+        NavigableMap<String,HashMap> data=fop.processData(jo);
+        ArrayList<Double> v=fop.getValues(data, "INR");
         
-        Set dates=data.keySet();
-        System.out.println(dates);
-        ArrayList<Double> d=vz.getValues(jo1, "INR");
-        System.out.println(d);
-        vz.plot(d);
+        SortedMap<String,HashMap> subdata=data.subMap("2019-01-01","2019-01-31");
+        
+//        vz.plot(fop.getValues(subdata, "INR"), new ArrayList(subdata.keySet()));
+        
+        ArrayList<Double> v2=fop.getValues(subdata, "GBP");
+        
+//        vz.mainPanel.addValues(v2);
+        new UserInterface(data).setVisible(true);
         
     }
-    private ArrayList<Double> getValues(JSONObject oobj,String currency){
-        ArrayList<Double> v = new ArrayList<Double>();
-        Iterator<Map.Entry> itr1 = oobj.entrySet().iterator(); 
-         while (itr1.hasNext()) { 
-             Map.Entry pair = itr1.next(); 
-             JSONObject prices=(JSONObject)pair.getValue();
-             v.add((double)prices.get(currency)); 
-         } 
-        return v;
-    }
-    void plot(ArrayList<Double> scores){
-        Graph mainPanel = new Graph(scores);
+    
+    void plot(ArrayList<Double> scores,ArrayList<String> labels){
+        mainPanel = new Graph(scores,labels);
         mainPanel.setPreferredSize(new Dimension(800, 600));
         JFrame frame = new JFrame("DrawGraph");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -71,29 +62,104 @@ public class Viusalizer {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
-    
-}
-//class Graph extends JFrame{
-//    ArrayList<Double> data;
-//    public Graph(String t,ArrayList<Double> data){
-//        this.data=data;
-//        setTitle(t);
-//        setSize(900,700);
-//        setLayout(null);
-//        setVisible(true);
-//        setResizable(false);
-//        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+ }
+
+//   
+//    private SortedMap processData(JSONObject jo){
+//        SortedMap<Date,HashMap> data=new TreeMap<Date,HashMap>();
+//        Map mp=((Map)(jo.get("rates")));
+//        Iterator<Map.Entry> itr1 = mp.entrySet().iterator(); 
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+//         while (itr1.hasNext()) { 
+//             Map.Entry pair = itr1.next(); 
+//             String s=pair.getKey().toString();
+//            try {
+//                Date ds=sdf.parse(s);
+//                HashMap dt=(HashMap)pair.getValue();
+//                data.put(ds, dt);
+//            } catch (java.text.ParseException ex) {
+//                System.out.println(ex);
+//            }   
+//         }
+//         return data;
 //    }
-//    public void paint(Graphics g){
-//        g.setColor(Color.BLACK);
-//        int n=data.size();
-//        int xp=0,yp=data.get(0).intValue();
+
+//        ArrayList<String> lables=new ArrayList<>(rowdata.keySet());
+//        System.out.println(lables);
+        
+//        ArrayList<Double> d1=vz.getValues(jo1, "INR");
+//
+//        ArrayList<Double> d3=vz.getValues(jo1, "GBP");
 //        
-//        for(int i=1;i<data.size();i++){
-//            int yi=data.get(i).intValue();
-//            g.drawLine(xp*10, yp, i*10,yi); 
-//            xp=i;yp=yi;
+//
+//        SimpleDateFormat sdfo=new SimpleDateFormat("yyyy-MM-dd");
+//        
+//        ArrayList<Date> lbs=new ArrayList<>();
+//        for(Object dt:lables){
+//            try {
+//                lbs.add(sdfo.parse(dt.toString()));
+//            } catch (java.text.ParseException ex) {
+//                System.out.println(ex);
+//            }
 //        }
-//        
-//    }
-//}
+        
+   
+    
+
+class UserInterface extends JFrame{
+    private JButton eurbtton = new JButton("INR vs EUR");
+    private JButton gbpbtton = new JButton("GBP,INR vs EUR");
+    private JButton latest_gbpbtton = new JButton("GBP,INR vs EUR (Latest)");
+    private JButton closeButton = new JButton("Close");
+    JPanel centerPanel;
+    NavigableMap<String, HashMap> data;
+    Viusalizer vz;
+    FileOperations fop;
+    public UserInterface(NavigableMap<String, HashMap> data) {
+        this.data=data;
+        vz=new Viusalizer();
+        fop=new FileOperations();
+        mainInterface();
+
+    }
+
+    private void mainInterface() {
+        setTitle("Currency prices with respect to EUR");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JPanel centerPanel = new JPanel(new GridLayout(5, 3));
+        centerPanel.add(eurbtton);
+        centerPanel.add(gbpbtton);
+        centerPanel.add(latest_gbpbtton);
+        centerPanel.add(closeButton);
+        eurbtton.addActionListener((e) -> {
+            SortedMap<String,HashMap> subdata=data.subMap("2019-01-01","2019-01-31");
+            Graph mainPanel = new Graph(fop.getValues(subdata, "INR"), new ArrayList(subdata.keySet()));
+            mainPanel.setPreferredSize(new Dimension(800, 600));
+            JDialog mydialog = new JDialog();
+            mydialog.setSize(new Dimension(1000,600));
+            mydialog.setTitle("INR exchange rate against EUR from 1 Jan 2019 to 31 Jan 2019");
+            mydialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL); // prevent user from doing something else
+            mydialog.add(mainPanel);
+            mydialog.setVisible(true);
+            
+            SwingUtilities.updateComponentTreeUI(this);
+        });
+        add(centerPanel, BorderLayout.CENTER);
+        setSize(1000, 500);
+//        setVisible(true);
+    }
+
+    private void addReportPanel() {
+        JPanel reportPanel = createNewPanel();
+        getContentPane().add(reportPanel, BorderLayout.CENTER);
+
+    }
+
+    private JPanel createNewPanel() {
+        JPanel localJPanel = new JPanel();
+        localJPanel.setLayout(new FlowLayout());
+        return localJPanel;
+    }
+
+}
