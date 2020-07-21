@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -34,19 +37,18 @@ public class Viusalizer {
      */
     
     public static void main(String[] args) throws IOException, ParseException, java.text.ParseException{
-        Viusalizer vz=new Viusalizer();
         FileOperations fop=new FileOperations();
         JSONObject jo=fop.getJSONObjFromFile("./data/data.json");
         NavigableMap<String,HashMap> data=fop.processData(jo);
         new UserInterface(data).setVisible(true);
     }
-
  }  
 
 class UserInterface extends JFrame{
     private JButton eurbtton = new JButton("INR vs EUR from 1 Jan 2019 to 31 Jan 2019");
     private JButton gbpbtton = new JButton("GBP,INR vs EUR from 1 Jan 2019 to 31 Jan 2019");
-    private JButton latest_gbpbtton = new JButton("GBP,INR vs EUR (Latest)");
+    private JButton latest_gbpbtton = new JButton("INR ,GBP vs EUR from 1 Jan 2019 to 31 Jan 2019 with latest rate");
+    private JButton custom = new JButton("Plot Data from API with custom Date and Currency Symbols");
     private JButton closeButton = new JButton("Close");
     JPanel centerPanel;
     NavigableMap<String, HashMap> data;
@@ -67,6 +69,7 @@ class UserInterface extends JFrame{
         centerPanel.add(eurbtton);
         centerPanel.add(gbpbtton);
         centerPanel.add(latest_gbpbtton);
+        centerPanel.add(custom);
         centerPanel.add(closeButton);
         eurbtton.addActionListener((e) -> {
             List<List> data_points=new ArrayList<>();
@@ -102,11 +105,39 @@ class UserInterface extends JFrame{
             SwingUtilities.updateComponentTreeUI(this);
         });
         latest_gbpbtton.addActionListener((e) -> {
+            List<List> data_points=new ArrayList<>();
+            SortedMap<String,HashMap> subdata=data.subMap("2019-01-01","2019-01-31");
+            data_points.add(fop.getValues(subdata, "INR"));
+            data_points.add(fop.getValues(subdata, "GBP"));
+            ArrayList<Double> indevidual_point = new ArrayList<Double>();
+            ArrayList<String> titles=new ArrayList<>();titles.add("INR");titles.add("GBP");
+            try {
+                JSONObject sjo = fop.getJSONObjFromFile("./data/latest-rates.json");
+                NavigableMap<String,HashMap> data=fop.processIndividual(sjo);
+                titles.add(data.firstKey()+" INR");
+                titles.add(data.firstKey()+" GBP");
+                HashMap dt=data.get(data.firstKey());
+                indevidual_point.add((double)dt.get("INR"));
+                indevidual_point.add((double)dt.get("GBP"));
 
+            } catch (IOException ex) {
+                System.out.println(ex);
+            } catch (ParseException ex) {
+                System.out.println(ex);
+            }
+            ArrayList<Color> colors=new ArrayList<>();colors.add(Color.RED);colors.add(Color.GREEN);colors.add(Color.BLUE);colors.add(Color.CYAN);
+            MultiLine mainPanel=new MultiLine(data_points,new ArrayList(subdata.keySet()),2,titles,colors,indevidual_point);
+            mainPanel.setPreferredSize(new Dimension(800, 600));
+            JDialog mydialog = new JDialog();
+            mydialog.setSize(new Dimension(1000,600));
+            mydialog.setTitle("INR ,GBP vs EUR from 1 Jan 2019 to 31 Jan 2019 with latest rate");
+            mydialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL); // prevent user from doing something else
+            mydialog.add(mainPanel);
+            mydialog.setVisible(true);
+            SwingUtilities.updateComponentTreeUI(this);
         });
         add(centerPanel, BorderLayout.CENTER);
         setSize(1000, 500);
-
     }
 
     private void addReportPanel() {

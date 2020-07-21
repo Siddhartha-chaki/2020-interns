@@ -61,4 +61,11 @@ public class FileOperations {
          System.out.println(data.keySet());
          return data;
     }
+    public NavigableMap processIndividual(JSONObject jo){
+        NavigableMap<String,HashMap> data=new TreeMap<String,HashMap>();
+        HashMap mp=((HashMap)(jo.get("rates")));
+        String date=(String)jo.get("date");
+        data.put(date, mp);
+        return data;
+    }
 }

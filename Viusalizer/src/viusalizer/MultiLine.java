@@ -34,6 +34,7 @@ public class MultiLine extends JPanel {
     private int number_of_line;
     private List<String> titles;
     private List<Color> line_colors;
+    private List<Double> indevidual_points;
 
     public MultiLine(List<List> data_points,List<String> labels, int number_of_line, List<String> titles,List<Color> line_colors) {
         this.data_points = data_points;
@@ -41,6 +42,14 @@ public class MultiLine extends JPanel {
         this.number_of_line=number_of_line;
         this.titles=titles;
         this.line_colors=line_colors;
+    }
+    public MultiLine(List<List> data_points,List<String> labels, int number_of_line, List<String> titles,List<Color> line_colors,List<Double> indevidual_points) {
+        this.data_points = data_points;
+        data_labels=labels;
+        this.number_of_line=number_of_line;
+        this.titles=titles;
+        this.line_colors=line_colors;
+        this.indevidual_points=indevidual_points;
     }
 
 
@@ -132,7 +141,7 @@ public class MultiLine extends JPanel {
             g.setStroke(GRAPH_STROKE);
             String tit = titles.get(i);
             int yz=height - padding - labelPadding-50-(30*i+1);
-            int xz=width - padding-50;
+            int xz=width - padding-100;
             g.drawString(tit,xz ,yz );
             g.drawLine(xz-30, yz-5, xz-10, yz-5);
             g.fillOval(xz-18-pointWidth, yz-3-pointWidth, pointWidth+2, pointWidth+2);
@@ -163,6 +172,16 @@ public class MultiLine extends JPanel {
                 }
             }
         }
+        if(indevidual_points != null){
+            for (int i = 0; i < indevidual_points.size(); i++) {
+            System.out.println(indevidual_points);
+            g.setColor(line_colors.get(number_of_line+i));
+            int x1 = (int) (i * xScale + padding + labelPadding);
+            int y1 = (int) ((maxScore - indevidual_points.get(i)) * yScale + padding);
+            g.fillOval(x1, y1, pointWidth+10, pointWidth+10);
+        }
+        }
+        
     }
    
     private double getMinValue() {
@@ -171,6 +190,11 @@ public class MultiLine extends JPanel {
             List<Double> dataPoints = data_points.get(j);
             for (Double score : dataPoints) {
                 minScore = Math.min(minScore, score);
+            }
+        }
+        if(indevidual_points != null){
+            for (double v : indevidual_points) {
+                minScore = Math.min(minScore, v);
             }
         }
         return Math.floor(minScore);
@@ -184,8 +208,14 @@ public class MultiLine extends JPanel {
                 maxScore = Math.max(maxScore, score);
             }
         }
+        if(indevidual_points != null){
+            for (double v : indevidual_points) {
+                maxScore = Math.max(maxScore, v);
+            }
+        }
         return Math.ceil(maxScore);
     }
+    
 }
 //
 //public class Graph extends JPanel {
