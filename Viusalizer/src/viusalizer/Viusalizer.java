@@ -136,6 +136,17 @@ class UserInterface extends JFrame{
             mydialog.setVisible(true);
             SwingUtilities.updateComponentTreeUI(this);
         });
+        custom.addActionListener((e) -> {
+            CustomPlot mainPanel=new CustomPlot();
+            mainPanel.setPreferredSize(new Dimension(800, 600));
+            JDialog mydialog = new JDialog();
+            mydialog.setSize(new Dimension(800,350));
+            mydialog.setTitle("INR exchange rate against EUR from 1 Jan 2019 to 31 Jan 2019");
+            mydialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL); // prevent user from doing something else
+            mydialog.add(mainPanel);
+            mydialog.setVisible(true);
+            SwingUtilities.updateComponentTreeUI(this);
+        });
         add(centerPanel, BorderLayout.CENTER);
         setSize(1000, 500);
     }
